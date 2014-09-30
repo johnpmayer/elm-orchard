@@ -1,0 +1,4 @@
+
+sudo npm install -g express-generator
+
+express user-admin
