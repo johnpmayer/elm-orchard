@@ -5,6 +5,9 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+var passport = require('passport');
+var GitHubStrategy = require('passport-github').Strategy;
+
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
@@ -21,9 +24,30 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.use('/', routes);
-app.use('/users', users);
+app.get('/', function(req, res) {
+  res.sendfile('./html/auth.html');
+});
+//app.use('/users', users);
+
+passport.use(
+    new GitHubStrategy({
+      clientID: 'c772caf95863255a4612',
+        clientSecret: '2704d2d47d52da0f2e009530a75caa8289700c2d',
+        callbackURL: 'http://104.131.115.221:3000/auth/github/callback'
+    }, function (accessToken, refreshToken, profile, done) {
+      console.log(profile);
+    })
+    );
+
+app.get('/auth/github', passport.authenticate('github'));
+
+app.get('/auth/github/callback',
+    passport.authenticate('github', {
+      successRedirect: '/success',
+      failureRedirect: '/error'}));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -33,28 +57,4 @@ app.use(function(req, res, next) {
 });
 
 // error handlers
-
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-    app.use(function(err, req, res, next) {
-        res.status(err.status || 500);
-        res.render('error', {
-            message: err.message,
-            error: err
-        });
-    });
-}
-
-// production error handler
-// no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-        message: err.message,
-        error: {}
-    });
-});
-
-
 module.exports = app;
